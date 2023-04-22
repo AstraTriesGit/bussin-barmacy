@@ -3,18 +3,16 @@ namespace Uhhh;
 
 public class Customer
 {
-    private string username;
-    private int customerID;
+    private readonly int _customerId;
 
     public Customer(string username)
     {
-        this.username = username;
-        customerID = Query.GetCustomerID(username);
+        _customerId = Query.GetCustomerId(username);
     }
 
     public void CustomerMenu()
     {
-        string menu = @"Select your choice:
+        const string menu = @"Select your choice:
 1) View products
 2) Add product to cart
 3) Check cart
@@ -22,12 +20,12 @@ public class Customer
 5) View past orders
 0) Exit
 ";
-        bool run = true;
+        var run = true;
         while (run)
         {
             Console.WriteLine(menu);
             
-            int input = int.Parse(Console.ReadLine().Trim());
+            var input = int.Parse(Console.ReadLine()!.Trim());
             switch (input)
             {
                 case 1:
@@ -56,26 +54,26 @@ public class Customer
         }
     }
 
-    private void ViewProducts()
+    private static void ViewProducts()
     {
-        bool run = true;
-        int threshold = 0;
-        string like = "%";
+        var run = true;
+        var threshold = 0;
+        var like = "%";
         while (run)
         {
             Console.WriteLine("Filter by price/name, see all or exit? (price/name/all/exit)");
-            string input = Console.ReadLine().Trim();
+            var input = Console.ReadLine()!.Trim();
 
             switch (input)
             {
                 case "price":
                     Console.WriteLine("Enter the price to get products below that price:");
-                    threshold = int.Parse(Console.ReadLine().Trim());
+                    threshold = int.Parse(Console.ReadLine()!.Trim());
                     Query.ViewProducts(threshold, like);
                     break;
                 case "name":
                     Console.WriteLine("Enter the name of the product you are searching for:");
-                    like = Console.ReadLine().Trim();
+                    like = Console.ReadLine()!.Trim();
                     Query.ViewProducts(threshold, like);
                     break;
                 case "all":
@@ -95,10 +93,10 @@ public class Customer
     private void AddProducts()
     {
         Console.WriteLine("Enter the name of the product:");
-        string name = Console.ReadLine().Trim();
+        var name = Console.ReadLine()!.Trim();
         Console.WriteLine("Enter the quantity of the product to purchase:");
-        int quantity = int.Parse(Console.ReadLine().Trim());
-        Query.AddToCart(name, quantity, customerID);
+        var quantity = int.Parse(Console.ReadLine()!.Trim());
+        Query.AddToCart(name, quantity, _customerId);
         
         Console.WriteLine("Product added!");
     }
@@ -106,27 +104,27 @@ public class Customer
     private void InspectCart()
     {
         Console.WriteLine("Here are the items in your cart:");
-        Query.InspectCart(customerID);
-        Console.WriteLine("The total cost of your cart is: " + Query.CartCost(customerID));
+        Query.InspectCart(_customerId);
+        Console.WriteLine("The total cost of your cart is: " + Query.CartCost(_customerId));
     }
 
     private void Checkout()
     {
-        if (Query.CartSanity(customerID))
+        if (Query.CartSanity(_customerId))
         {
             Console.WriteLine("Enter your mode of payment(COD/Online):");
-            string mode = Console.ReadLine().Trim();
+            var mode = Console.ReadLine()!.Trim();
             switch (mode)
             {
                 case "COD":
                     Console.WriteLine("Success! Your order will be delivered soon.");
-                    Query.ClearCart(customerID, mode);
+                    Query.ClearCart(_customerId, mode);
                     break;
                 case "Online":
                     Console.WriteLine("Waiting for payment confirmation...");
                     Thread.Sleep(3000);
                     Console.WriteLine("Success! Your order will be delivered soon.");
-                    Query.ClearCart(customerID, mode);
+                    Query.ClearCart(_customerId, mode);
                     break;
                 default:
                     Console.WriteLine("Not a valid input!");
@@ -141,16 +139,16 @@ public class Customer
 
     private void ViewOrderHistory()
     {
-        Query.GetCustomerOrders(customerID);
+        Query.GetCustomerOrders(_customerId);
         
         Console.WriteLine("Get details about order? (Y/n)");
-        string input = Console.ReadLine().Trim();
+        var input = Console.ReadLine()!.Trim();
 
         switch (input)
         {
             case "Y":
                 Console.WriteLine("Enter the order ID:");
-                int id = int.Parse(Console.ReadLine().Trim());
+                var id = int.Parse(Console.ReadLine()!.Trim());
                 Query.OrderDetails(id);
                 Query.ItemsInOrder(id);
                 break;

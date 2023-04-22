@@ -2,22 +2,22 @@
 
 namespace Uhhh;
 
-public class Pharma
+public static class Pharma
 {
-    private static string adminUsername = "root";
-    private static string adminPassword = "gg";
-    private const string myConnectionString = "server=127.0.0.1;uid=root;pwd=420LMAOyeet69;database=pharmacy";
+    private const string AdminUsername = "root";
+    private const string AdminPassword = "gg";
+    private const string MyConnectionString = "server=127.0.0.1;uid=root;pwd=420LMAOyeet69;database=pharmacy";
 
-    public static MySqlConnection conn;
+    public static MySqlConnection? Conn;
     
     public static void Main()
     {
         // database init
         try
         {
-            conn = new MySqlConnection();
-            conn.ConnectionString = myConnectionString;
-            conn.Open();
+            Conn = new MySqlConnection();
+            Conn.ConnectionString = MyConnectionString;
+            Conn.Open();
         }
         catch(MySqlException ex)
         {
@@ -25,30 +25,28 @@ public class Pharma
             Console.WriteLine(ex.Message);
             Environment.Exit(1);
         }
-        
-        bool run = true;
-        string welcome = 
-            @"Welcome to the pharmacy! 
+
+        const string welcome = @"Welcome to the pharmacy! 
 Enter the input:
 1) Login as customer.
 2) Login as administrator.
 3) Press 0 to exit the program.";
         Console.WriteLine(welcome);
-        while (run)
+        while (true)
         {
 
-            var input = int.Parse(Console.ReadLine());
+            var input = int.Parse(Console.ReadLine() ?? string.Empty);
             switch (input)
             {
                 case 1:
                     Console.WriteLine("Enter your username:");
-                    var username = Console.ReadLine().Trim();
+                    var username = Console.ReadLine()!.Trim();
                     Console.WriteLine("Enter your password:");
-                    var pwd = Console.ReadLine().Trim();
+                    var pwd = Console.ReadLine()!.Trim();
                     if (Verified("Customer", username, pwd))
                     {
                         Console.WriteLine("You're in, " + username + "!");
-                        Customer customer = new Customer(username);
+                        var customer = new Customer(username);
                         customer.CustomerMenu();
                     }
                     else
@@ -58,13 +56,13 @@ Enter the input:
                     break;
                 case 2:
                     Console.WriteLine("Enter your username");
-                    username = Console.ReadLine().Trim();
+                    username = Console.ReadLine()!.Trim();
                     Console.WriteLine("Enter your password");
-                    pwd = Console.ReadLine().Trim();
+                    pwd = Console.ReadLine()!.Trim();
                     if (Verified("Admin", username, pwd))
                     {
                         Console.WriteLine("You're in, " + username + "!");
-                        Admin admin = new Admin();
+                        var admin = new Admin();
                         admin.AdminMenu();
                     }
                     else
@@ -86,16 +84,11 @@ Enter the input:
 
     private static bool Verified(string mode, string username, string pwd)
     {
-        switch (mode)
+        return mode switch
         {
-            case "Admin":
-                return (username == adminUsername) && (pwd == adminPassword);
-            case "Customer":
-                return pwd == Query.GetPassword(username);
-                break;
-            default:
-                return false;
-        }
-        
+            "Admin" => (username == AdminUsername) && (pwd == AdminPassword),
+            "Customer" => pwd == Query.GetPassword(username),
+            _ => false
+        };
     }
 }

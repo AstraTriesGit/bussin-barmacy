@@ -1,143 +1,139 @@
-﻿using System.Collections;
-using MySql.Data.MySqlClient;
+﻿using MySql.Data.MySqlClient;
 using System.Data;
 using Uhhh;
 
-public class Query
+internal static class Query
 {
-    private static MySqlCommand command;
-    private static MySqlDataReader reader;
+    private static MySqlCommand? _command;
+    private static MySqlDataReader? _reader;
 
     // objects are use-once
     private static void Preprocessing()
     {
-        command = new MySqlCommand();
-        command.Connection = Pharma.conn;
-        command.CommandType = CommandType.Text;
+        _command = new MySqlCommand();
+        _command.Connection = Pharma.Conn;
+        _command!.CommandType = CommandType.Text;
     }
 
     public static string GetPassword(string username)
     {
         Preprocessing();
-        command.CommandText = "SELECT Password FROM pharmacy.Customers WHERE Name = '" + username + "'";
-        reader = command.ExecuteReader();
-        string pwd = "0";
-        while (reader.Read())
+        _command!.CommandText = $"SELECT Password FROM pharmacy.Customers WHERE Name = '{username}'";
+        _reader = _command.ExecuteReader();
+        var pwd = "0";
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
         return pwd;
     }
 
-    public static int GetCustomerID(string username)
+    public static int GetCustomerId(string username)
     {
         Preprocessing();
-        command.CommandText = "SELECT Customer_ID FROM pharmacy.Customers WHERE Name = '" + username + "'";
-        string pwd = "0";
-        reader = command.ExecuteReader();
-        while (reader.Read())
+        _command!.CommandText = $"SELECT Customer_ID FROM pharmacy.Customers WHERE Name = '{username}'";
+        var pwd = "0";
+        _reader = _command.ExecuteReader();
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
         return int.Parse(pwd);
     }
     
     public static void ViewProducts(int threshold, string like)
     {
         Preprocessing();
-        command.CommandText = "SELECT * FROM pharmacy.Products WHERE Price < " + threshold + " AND Name LIKE '" + like + "'";
+        _command!.CommandText = $"SELECT * FROM pharmacy.Products WHERE Price < {threshold} AND Name LIKE '{like}'";
 
-        reader = command.ExecuteReader();
+        _reader = _command.ExecuteReader();
         Console.WriteLine("ProductID    Name            Manufacturer                      Price   Quantity Available");
-        while (reader.Read())
+        while (_reader.Read())
         {
-            string pid = reader[0].ToString()!.PadRight("ProductID    ".Length);
-            string name = reader[1].ToString()!.PadRight(16);
-            string manufacturer = reader[2].ToString()!.PadRight("Schumm, Pfannerstill and Lueilwitz".Length);
-            string price = reader[3].ToString()!.PadRight("Price   ".Length);
+            var pid = _reader[0].ToString()!.PadRight("ProductID    ".Length);
+            var name = _reader[1].ToString()!.PadRight(16);
+            var manufacturer = _reader[2].ToString()!.PadRight("Schumm, Pfannerstill and Lueilwitz".Length);
+            var price = _reader[3].ToString()!.PadRight("Price   ".Length);
         
         
-            Console.WriteLine(pid + name + manufacturer + price + reader[4]);
+            Console.WriteLine(pid + name + manufacturer + price + _reader[4]);
         }
-        reader.Close();
+        _reader.Close();
     }
 
-    public static int GetProductID(string name)
+    private static int GetProductId(string name)
     {
         Preprocessing();
-        command.CommandText = "SELECT ProductID FROM pharmacy.Products WHERE Name = '" + name + "'";
-        string pwd = "0";
-        reader = command.ExecuteReader();
-        while (reader.Read())
+        _command!.CommandText = $"SELECT ProductID FROM pharmacy.Products WHERE Name = '{name}'";
+        var pwd = "0";
+        _reader = _command.ExecuteReader();
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
         return int.Parse(pwd);
     }
 
     public static void AddToCart(string name, int quantity, int customerId)
     {
         Preprocessing();
-        command.CommandText = "INSERT INTO pharmacy.Cart (CustomerID, ProductID, Quantity) VALUES (" +
-                              customerId + ", " +
-                              GetProductID(name) + ", " +
-                              quantity + ")";
-        reader = command.ExecuteReader();
-        reader.Close();
+        _command!.CommandText =
+            $"INSERT INTO pharmacy.Cart (CustomerID, ProductID, Quantity) VALUES ({customerId}, {GetProductId(name)}, {quantity})";
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static void InspectCart(int customerId)
     {
         Preprocessing();
-        command.CommandText = "SELECT p.Name, p.Price, c.Quantity FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID " +
-                              "WHERE CustomerID = " + customerId;
+        _command!.CommandText =
+            $"SELECT p.Name, p.Price, c.Quantity FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
 
-        reader = command.ExecuteReader();
+        _reader = _command.ExecuteReader();
         Console.WriteLine("Name            Price   Quantity");
-        while (reader.Read())
+        while (_reader.Read())
         {
-            string name = reader[0].ToString()!.PadRight("Name            ".Length);
-            string price = reader[1].ToString()!.PadRight("Price   ".Length);
-            string quantity = reader[2].ToString()!;
+            var name = _reader[0].ToString()!.PadRight("Name            ".Length);
+            var price = _reader[1].ToString()!.PadRight("Price   ".Length);
+            var quantity = _reader[2].ToString()!;
             
             Console.WriteLine(name + price + quantity);
         }
-        reader.Close();
+        _reader.Close();
     }
 
     public static int CartCost(int customerId)
     {
         Preprocessing();
-        command.CommandText = "SELECT SUM(c.Quantity * p.Price) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID" +
-                              " WHERE CustomerID = " + customerId;
+        _command!.CommandText =
+            $"SELECT SUM(c.Quantity * p.Price) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
         
-        string pwd = "0";
-        reader = command.ExecuteReader();
-        while (reader.Read())
+        var pwd = "0";
+        _reader = _command.ExecuteReader();
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
         return int.Parse(pwd);
     }
 
     public static bool CartSanity(int customerId)
     {
         Preprocessing();
-        command.CommandText =
-            "SELECT COUNT(*) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID " +
-            "WHERE c.Quantity > p.Quantity AND CustomerID = " + customerId;
+        _command!.CommandText =
+            $"SELECT COUNT(*) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE c.Quantity > p.Quantity AND CustomerID = {customerId}";
         
-        string pwd = "0";
-        reader = command.ExecuteReader();
-        while (reader.Read())
+        var pwd = "0";
+        _reader = _command.ExecuteReader();
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
 
         return int.Parse(pwd) == 0;
     }
@@ -146,175 +142,151 @@ public class Query
     {
         AddToOrders(customerId, mode);
         Preprocessing();
-        command.CommandText = "SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = " + customerId;
-        reader = command.ExecuteReader();
-        List<int> data = new List<int>();
-        while (reader.Read())
+        _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = {customerId}";
+        _reader = _command.ExecuteReader();
+        var data = new List<int>();
+        while (_reader.Read())
         {
             // prod id
-            data.Add(int.Parse(reader[0].ToString().Trim()));
+            data.Add(int.Parse(_reader[0].ToString()!.Trim()));
             // qty
-            data.Add(int.Parse(reader[1].ToString().Trim()));
+            data.Add(int.Parse(_reader[1].ToString()!.Trim()));
         }
-        reader.Close();
-        for (int i = 0; i < data.Count/2; i++)
+        _reader.Close();
+        for (var i = 0; i < data.Count/2; i++)
         {
-            AddToOrderedItems(GetNewOrderID(), data[0], data[1]);
+            AddToOrderedItems(GetNewOrderId(), data[0], data[1]);
         }
         Preprocessing();
         ClearCartFromWarehouse(customerId);
         Preprocessing();
-        command.CommandText = "DELETE FROM pharmacy.Cart WHERE CustomerID = " + customerId;
+        _command.CommandText = $"DELETE FROM pharmacy.Cart WHERE CustomerID = {customerId}";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
-    public static void AddToOrders(int customerId, string mode)
+    private static void AddToOrders(int customerId, string mode)
     {
         Preprocessing();
-        int newOrderId = GetNewOrderID() + 1;
-        command.CommandText = "INSERT INTO pharmacy.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES " +
-                              "(" +
-                              newOrderId + ", " +
-                              "NOW(), " +
-                              "'Scheduled'," +
-                              CartCost(customerId) + ", " +
-                              mode + ", " +
-                              AssignDelivery() + ", " +
-                              customerId + ", " +
-                              ")";
-        reader = command.ExecuteReader();
-        reader.Close();
+        var newOrderId = GetNewOrderId() + 1;
+        _command!.CommandText =
+            $"INSERT INTO pharmacy.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES ({newOrderId}, NOW(), 'Scheduled',{CartCost(customerId)}, {mode}, {AssignDelivery()}, {customerId}, )";
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
-    public static void ClearCartFromWarehouse(int customerId)
+    private static void ClearCartFromWarehouse(int customerId)
     {
         Preprocessing();
-        command.CommandText = "SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = " + customerId;
-        reader = command.ExecuteReader();
-        List<int> data = new List<int>();
-        while (reader.Read())
+        _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = {customerId}";
+        _reader = _command.ExecuteReader();
+        var data = new List<int>();
+        while (_reader.Read())
         {
-            int prodId = int.Parse(reader[0].ToString()!.Trim());
-            int qty = int.Parse(reader[1].ToString()!.Trim());
+            var prodId = int.Parse(_reader[0].ToString()!.Trim());
+            var qty = int.Parse(_reader[1].ToString()!.Trim());
             data.Add(prodId);
             data.Add(qty);
         }
-        reader.Close();
+        _reader.Close();
         
-        for (int i = 0; i < data.Count/2; i++)
+        for (var i = 0; i < data.Count/2; i++)
         {
             Preprocessing();
-            command.CommandText = "CALL pharmacy.DeleteProducts(" + data[i + 1] + ", " + data[i] + ")";
+            _command.CommandText = $"CALL pharmacy.DeleteProducts({data[i + 1]}, {data[i]})";
 
-            reader = command.ExecuteReader();
-            reader.Close();
+            _reader = _command.ExecuteReader();
+            _reader.Close();
         }
         
     }
 
-    public static void AddToOrderedItems(int orderId, int productId, int qty)
+    private static void AddToOrderedItems(int orderId, int productId, int qty)
     {
         Preprocessing();
-        command.CommandText = "INSERT INTO pharmacy.OrderedItems (" +
-                              "SELECT UnitID AS Unit_ID," + orderId +" AS OrderId " +
-                              "FROM pharmacy.Warehouse " +
-                              "WHERE ProductID = " + productId +
-                              " LIMIT " + qty +
-                              ")";
+        _command!.CommandText =
+            $"INSERT INTO pharmacy.OrderedItems (SELECT UnitID AS Unit_ID,{orderId} AS OrderId FROM pharmacy.Warehouse WHERE ProductID = {productId} LIMIT {qty})";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static void GetCustomerOrders(int customerId)
     {
         Preprocessing();
-        command.CommandText = "SELECT * FROM pharmacy.Orders WHERE CustomerID = " + customerId;
+        _command!.CommandText = $"SELECT * FROM pharmacy.Orders WHERE CustomerID = {customerId}";
 
-        reader = command.ExecuteReader();
+        _reader = _command.ExecuteReader();
         Console.WriteLine("OrderID    OrderDate           Status            Cost            Payment Type      Correspondent ID");
-        while (reader.Read())
+        while (_reader.Read())
         {
-            string oid = reader[0].ToString()!.PadRight("OrderID    ".Length);
-            string orderDate = reader[1].ToString()!.PadRight("OrderDate           ".Length);
-            string status = reader[2].ToString()!.PadRight("Status            ".Length);
-            string cost = reader[3].ToString()!.PadRight("Cost            ".Length);
-            string paymentType = reader[4].ToString()!.PadRight("Payment Type      ".Length);
-            string correspondentId = reader[5].ToString()!;
+            var oid = _reader[0].ToString()!.PadRight("OrderID    ".Length);
+            var orderDate = _reader[1].ToString()!.PadRight("OrderDate           ".Length);
+            var status = _reader[2].ToString()!.PadRight("Status            ".Length);
+            var cost = _reader[3].ToString()!.PadRight("Cost            ".Length);
+            var paymentType = _reader[4].ToString()!.PadRight("Payment Type      ".Length);
+            var correspondentId = _reader[5].ToString()!;
         
         
             Console.WriteLine(oid, orderDate, status, cost, paymentType, correspondentId);
         }
-        reader.Close();
+        _reader.Close();
     }
 
     public static void ItemsInOrder(int orderId)
     {
         Preprocessing();
-        command.CommandText = "SELECT TEMP.ProductID, TEMP.quantity, Name, Price " +
-                              "FROM (SELECT COUNT(O.Unit_ID) AS quantity, ProductID " +
-                              "FROM (pharmacy.OrderedItems O JOIN pharmacy.Warehouse W on O.Unit_ID = W.UnitID) " +
-                              "WHERE O.OrderID =  " + orderId +
-                              " GROUP BY ProductID) as TEMP " +
-                              "JOIN pharmacy.Products p on TEMP.ProductID = p.ProductID";
+        _command!.CommandText =
+            $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price FROM (SELECT COUNT(O.Unit_ID) AS quantity, ProductID FROM (pharmacy.OrderedItems O JOIN pharmacy.Warehouse W on O.Unit_ID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy.Products p on TEMP.ProductID = p.ProductID";
         
-        reader = command.ExecuteReader();
+        _reader = _command.ExecuteReader();
         Console.WriteLine("Name            Price            Quantity");
-        while (reader.Read())
+        while (_reader.Read())
         {
-            string name = reader[2].ToString()!.PadRight("Name            ".Length);
-            string price = reader[3].ToString()!.PadRight("Price            ".Length);
-            string quantity = reader[1].ToString()!.PadRight("Status            ".Length);
+            var name = _reader[2].ToString()!.PadRight("Name            ".Length);
+            var price = _reader[3].ToString()!.PadRight("Price            ".Length);
+            var quantity = _reader[1].ToString()!.PadRight("Status            ".Length);
 
             Console.WriteLine(name, price, quantity);
         }
-        reader.Close();
+        _reader.Close();
     }
     
     public static void OrderDetails(int orderId) 
     {
         Preprocessing();
-        command.CommandText = "SELECT * FROM pharmacy.Orders WHERE OrderID = " + orderId;
+        _command!.CommandText = $"SELECT * FROM pharmacy.Orders WHERE OrderID = {orderId}";
 
-        reader = command.ExecuteReader();
-        while (reader.Read())
+        _reader = _command.ExecuteReader();
+        while (_reader.Read())
         {
-            string details = "Order Date: " + reader[1] +
-                             "\nStatus: " + reader[2] +
-                             "\nCost: " + reader[3] +
-                             "\nPayment Type: " + reader[4] +
-                             "\nCorrespondent ID: " + reader[5];
+            var details =
+                $"Order Date: {_reader[1]}\nStatus: {_reader[2]}\nCost: {_reader[3]}\nPayment Type: {_reader[4]}\nCorrespondent ID: {_reader[5]}";
             
             Console.WriteLine(details);
         }
-        reader.Close();
+        _reader.Close();
     }
     
     // time for admin privileges
     public static void CustomQuery(string query)
     {
         Preprocessing();
-        command.CommandText = query;
+        _command!.CommandText = query;
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static void AddToWarehouse(string name, string manuf, int price, int quantity, int prodId)
     {
         Preprocessing();
-        command.CommandText = "INSERT INTO pharmacy.Products (ProductID, Name, Manufacturer, Price, Quantity) VALUES (" 
-                              + prodId + 
-                              ",'" + name +
-                              "','" + manuf +
-                              "', " + price +
-                              ", " + quantity +
-                              ")";
+        _command!.CommandText =
+            $"INSERT INTO pharmacy.Products (ProductID, Name, Manufacturer, Price, Quantity) VALUES ({prodId},'{name}','{manuf}', {price}, {quantity})";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
         
         LoadNewProducts(quantity, prodId);
     }
@@ -323,10 +295,10 @@ public class Query
     {
         Preprocessing();
         DeleteProducts(GetProductQuantity(prodId), prodId);
-        command.CommandText = "DELETE FROM pharmacy.Products WHERE ProductID = " + prodId;
+        _command!.CommandText = $"DELETE FROM pharmacy.Products WHERE ProductID = {prodId}";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static void UpdateProductQuantity(int id, int qty)
@@ -345,81 +317,73 @@ public class Query
             return;
         }
         Preprocessing();
-        command.CommandText = "UPDATE pharmacy.Products " +
-                              "SET Quantity = " + qty +
-                              " WHERE ProductID = " + id;
+        _command!.CommandText = $"UPDATE pharmacy.Products SET Quantity = {qty} WHERE ProductID = {id}";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static void LoadNewProducts(int qty, int prodId)
     {
         Preprocessing();
-        command.CommandText = "CALL pharmacy.LoadNewProducts("
-                              + qty +
-                              ", " + prodId +
-                              ")";
+        _command!.CommandText = $"CALL pharmacy.LoadNewProducts({qty}, {prodId})";
         
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
-    public static void DeleteProducts(int qty, int prodId)
+    private static void DeleteProducts(int qty, int prodId)
     {
         Preprocessing();
-        command.CommandText = "CALL pharmacy.DeleteProducts("
-                              + qty +
-                              ", " + prodId +
-                              ")";
+        _command!.CommandText = $"CALL pharmacy.DeleteProducts({qty}, {prodId})";
 
-        reader = command.ExecuteReader();
-        reader.Close();
+        _reader = _command.ExecuteReader();
+        _reader.Close();
     }
 
     public static int GetProductQuantity(int prodId)
     {
         Preprocessing();
-        command.CommandText = "SELECT Quantity FROM pharmacy.Products WHERE ProductID = " + prodId;
-        reader = command.ExecuteReader();
-        string pwd = "0";
-        while (reader.Read())
+        _command!.CommandText = $"SELECT Quantity FROM pharmacy.Products WHERE ProductID = {prodId}";
+        _reader = _command.ExecuteReader();
+        var pwd = "0";
+        while (_reader.Read())
         {
-            pwd = reader[0].ToString()!;
+            pwd = _reader[0].ToString()!;
         }
-        reader.Close();
+        _reader.Close();
         return int.Parse(pwd);
     }
 
-    public static int GetNewOrderID()
+    private static int GetNewOrderId()
     {
         Preprocessing();
-        command.CommandText = "SELECT MAX(OrderID) FROM pharmacy.Orders";
-        reader = command.ExecuteReader();
-        string n = "0";
-        while (reader.Read())
+        _command!.CommandText = "SELECT MAX(OrderID) FROM pharmacy.Orders";
+        _reader = _command.ExecuteReader();
+        var n = "0";
+        while (_reader.Read())
         {
-            n = reader[0].ToString().Trim();
+            n = _reader[0].ToString()!.Trim();
         }
-        reader.Close();
+        _reader.Close();
         return int.Parse(n);
     }
 
-    public static int AssignDelivery()
+    private static int AssignDelivery()
     {
         Preprocessing();
-        command.CommandText = "SELECT CorrespondentID FROM pharmacy.Orders WHERE Status = 'Delivered'";
+        _command!.CommandText = "SELECT CorrespondentID FROM pharmacy.Orders WHERE Status = 'Delivered'";
 
-        reader = command.ExecuteReader();
-        List<int> ids = new List<int>();
-        while (reader.Read())
+        _reader = _command.ExecuteReader();
+        var ids = new List<int>();
+        while (_reader.Read())
         {
-            ids.Add(int.Parse(reader[0].ToString().Trim()));
+            ids.Add(int.Parse(_reader[0].ToString()!.Trim()));
         }
-        reader.Close();
+        _reader.Close();
 
         var rng = new Random();
-        int guy = rng.Next(ids.Count);  
+        var guy = rng.Next(ids.Count);  
         
         return guy;
     }
