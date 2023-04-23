@@ -21,7 +21,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT Password FROM pharmacy.Customers WHERE Name = '{username}'";
+            _command!.CommandText = $"SELECT Password FROM pharmacy_prod.Customers WHERE Name = '{username}'";
             _reader = _command.ExecuteReader();
             var pwd = "0";
             while (_reader.Read())
@@ -44,7 +44,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT Customer_ID FROM pharmacy.Customers WHERE Name = '{username}'";
+            _command!.CommandText = $"SELECT Customer_ID FROM pharmacy_prod.Customers WHERE Name = '{username}'";
             var pwd = "0";
             _reader = _command.ExecuteReader();
             while (_reader.Read())
@@ -68,7 +68,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT * FROM pharmacy.Products WHERE Price < {threshold} AND Name LIKE '{like}'";
+            _command!.CommandText = $"SELECT * FROM pharmacy_prod.Products WHERE Price < {threshold} AND Name LIKE '{like}'";
 
             _reader = _command.ExecuteReader();
             Console.WriteLine("ProductID    Name            Manufacturer                      Price   Quantity Available");
@@ -97,7 +97,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT ProductID FROM pharmacy.Products WHERE Name = '{name}'";
+            _command!.CommandText = $"SELECT ProductID FROM pharmacy_prod.Products WHERE Name = '{name}'";
             var pwd = "0";
             _reader = _command.ExecuteReader();
             while (_reader.Read())
@@ -122,7 +122,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"INSERT INTO pharmacy.Cart (CustomerID, ProductID, Quantity) VALUES ({customerId}, {GetProductId(name)}, {quantity})";
+                $"INSERT INTO pharmacy_prod.Cart (CustomerID, ProductID, Quantity) VALUES ({customerId}, {GetProductId(name)}, {quantity})";
             _reader = _command.ExecuteReader();
             _reader.Close();
         }
@@ -140,7 +140,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"SELECT p.Name, p.Price, c.Quantity FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
+                $"SELECT p.Name, p.Price, c.Quantity FROM pharmacy_prod.Cart c JOIN pharmacy_prod.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
 
             _reader = _command.ExecuteReader();
             Console.WriteLine("Name            Price   Quantity");
@@ -169,7 +169,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"SELECT SUM(c.Quantity * p.Price) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
+                $"SELECT SUM(c.Quantity * p.Price) FROM pharmacy_prod.Cart c JOIN pharmacy_prod.Products p on c.ProductID = p.ProductID WHERE CustomerID = {customerId}";
         
             var pwd = "0";
             _reader = _command.ExecuteReader();
@@ -195,7 +195,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"SELECT COUNT(*) FROM pharmacy.Cart c JOIN pharmacy.Products p on c.ProductID = p.ProductID WHERE c.Quantity > p.Quantity AND CustomerID = {customerId}";
+                $"SELECT COUNT(*) FROM pharmacy_prod.Cart c JOIN pharmacy_prod.Products p on c.ProductID = p.ProductID WHERE c.Quantity > p.Quantity AND CustomerID = {customerId}";
         
             var pwd = "0";
             _reader = _command.ExecuteReader();
@@ -222,7 +222,7 @@ internal static class Query
         {
             AddToOrders(customerId, mode);
             Preprocessing();
-            _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = {customerId}";
+            _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy_prod.Cart WHERE CustomerID = {customerId}";
             _reader = _command.ExecuteReader();
             var data = new List<int>();
             while (_reader.Read())
@@ -240,7 +240,7 @@ internal static class Query
             Preprocessing();
             ClearCartFromWarehouse(customerId);
             Preprocessing();
-            _command.CommandText = $"DELETE FROM pharmacy.Cart WHERE CustomerID = {customerId}";
+            _command.CommandText = $"DELETE FROM pharmacy_prod.Cart WHERE CustomerID = {customerId}";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -261,7 +261,7 @@ internal static class Query
             Preprocessing();
             var newOrderId = GetNewOrderId() + 1;
             _command!.CommandText =
-                $"INSERT INTO pharmacy.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES ({newOrderId}, NOW(), 'Scheduled',{CartCost(customerId)}, {mode}, {AssignDelivery()}, {customerId}, )";
+                $"INSERT INTO pharmacy_prod.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES ({newOrderId}, NOW(), 'Scheduled',{CartCost(customerId)}, {mode}, {AssignDelivery()}, {customerId}, )";
             _reader = _command.ExecuteReader();
             _reader.Close();
         }
@@ -278,7 +278,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy.Cart WHERE CustomerID = {customerId}";
+            _command!.CommandText = $"SELECT ProductID, Quantity FROM pharmacy_prod.Cart WHERE CustomerID = {customerId}";
             _reader = _command.ExecuteReader();
             var data = new List<int>();
             while (_reader.Read())
@@ -293,7 +293,7 @@ internal static class Query
             for (var i = 0; i < data.Count/2; i++)
             {
                 Preprocessing();
-                _command.CommandText = $"CALL pharmacy.DeleteProducts({data[i + 1]}, {data[i]})";
+                _command.CommandText = $"CALL pharmacy_prod.DeleteProducts({data[i + 1]}, {data[i]})";
 
                 _reader = _command.ExecuteReader();
                 _reader.Close();
@@ -313,7 +313,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"INSERT INTO pharmacy.OrderedItems (SELECT UnitID AS Unit_ID,{orderId} AS OrderId FROM pharmacy.Warehouse WHERE ProductID = {productId} LIMIT {qty})";
+                $"INSERT INTO pharmacy_prod.OrderedItems (SELECT UnitID AS Unit_ID,{orderId} AS OrderId FROM pharmacy_prod.Warehouse WHERE ProductID = {productId} LIMIT {qty})";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -331,7 +331,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT * FROM pharmacy.Orders WHERE CustomerID = {customerId}";
+            _command!.CommandText = $"SELECT * FROM pharmacy_prod.Orders WHERE CustomerID = {customerId}";
 
             _reader = _command.ExecuteReader();
             Console.WriteLine("OrderID    OrderDate           Status            Cost            Payment Type      Correspondent ID");
@@ -364,7 +364,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price FROM (SELECT COUNT(O.Unit_ID) AS quantity, ProductID FROM (pharmacy.OrderedItems O JOIN pharmacy.Warehouse W on O.Unit_ID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy.Products p on TEMP.ProductID = p.ProductID";
+                $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price FROM (SELECT COUNT(O.Unit_ID) AS quantity, ProductID FROM (pharmacy_prod.OrderedItems O JOIN pharmacy_prod.Warehouse W on O.Unit_ID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy_prod.Products p on TEMP.ProductID = p.ProductID";
         
             _reader = _command.ExecuteReader();
             Console.WriteLine("Name            Price            Quantity");
@@ -392,7 +392,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT * FROM pharmacy.Orders WHERE OrderID = {orderId}";
+            _command!.CommandText = $"SELECT * FROM pharmacy_prod.Orders WHERE OrderID = {orderId}";
 
             _reader = _command.ExecuteReader();
             while (_reader.Read())
@@ -438,7 +438,7 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"INSERT INTO pharmacy.Products (ProductID, Name, Manufacturer, Price, Quantity) VALUES ({prodId},'{name}','{manuf}', {price}, {quantity})";
+                $"INSERT INTO pharmacy_prod.Products (ProductID, Name, Manufacturer, Price, Quantity) VALUES ({prodId},'{name}','{manuf}', {price}, {quantity})";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -460,7 +460,7 @@ internal static class Query
         {
             Preprocessing();
             DeleteProducts(GetProductQuantity(prodId), prodId);
-            _command!.CommandText = $"DELETE FROM pharmacy.Products WHERE ProductID = {prodId}";
+            _command!.CommandText = $"DELETE FROM pharmacy_prod.Products WHERE ProductID = {prodId}";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -491,7 +491,7 @@ internal static class Query
                 return;
             }
             Preprocessing();
-            _command!.CommandText = $"UPDATE pharmacy.Products SET Quantity = {qty} WHERE ProductID = {id}";
+            _command!.CommandText = $"UPDATE pharmacy_prod.Products SET Quantity = {qty} WHERE ProductID = {id}";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -510,7 +510,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"CALL pharmacy.LoadNewProducts({qty}, {prodId})";
+            _command!.CommandText = $"CALL pharmacy_prod.LoadNewProducts({qty}, {prodId})";
         
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -529,7 +529,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"CALL pharmacy.DeleteProducts({qty}, {prodId})";
+            _command!.CommandText = $"CALL pharmacy_prod.DeleteProducts({qty}, {prodId})";
 
             _reader = _command.ExecuteReader();
             _reader.Close();
@@ -549,7 +549,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT Quantity FROM pharmacy.Products WHERE ProductID = {prodId}";
+            _command!.CommandText = $"SELECT Quantity FROM pharmacy_prod.Products WHERE ProductID = {prodId}";
             _reader = _command.ExecuteReader();
             var pwd = "0";
             while (_reader.Read())
@@ -574,7 +574,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = "SELECT MAX(OrderID) FROM pharmacy.Orders";
+            _command!.CommandText = "SELECT MAX(OrderID) FROM pharmacy_prod.Orders";
             _reader = _command.ExecuteReader();
             var n = "0";
             while (_reader.Read())
@@ -599,7 +599,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = "SELECT CorrespondentID FROM pharmacy.Orders WHERE Status = 'Delivered'";
+            _command!.CommandText = "SELECT CorrespondentID FROM pharmacy_prod.Orders WHERE Status = 'Delivered'";
 
             _reader = _command.ExecuteReader();
             var ids = new List<int>();
