@@ -6,7 +6,7 @@ public static class Pharma
 {
     private const string AdminUsername = "root";
     private const string AdminPassword = "gg";
-    private const string MyConnectionString = "server=127.0.0.1;uid=root;pwd=420LMAOyeet69;database=pharmacy";
+    private const string MyConnectionString = "server=127.0.0.1;uid=root;pwd=youreallythoughtthiswasthepassword;database=pharmacy";
 
     public static MySqlConnection? Conn;
     
