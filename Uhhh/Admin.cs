@@ -26,10 +26,10 @@ public class Admin
                     break;
                 case 3:
                     UpdateProductQuantity();
-                break;
+                    break;
                 case 4:
                     ExecuteCustomQuery();
-                break;
+                    break;
                 case 0:
                     run = false;
                     break;

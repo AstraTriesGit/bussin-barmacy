@@ -8,7 +8,7 @@ internal static class Query
     private static MySqlCommand? _command;
     private static MySqlDataReader? _reader;
 
-    // objects are use-once
+    // statically called queries
     private static void Preprocessing()
     {
         _command = new MySqlCommand();
@@ -35,7 +35,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            return "";
         }
     }
 
@@ -44,7 +44,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT Customer_ID FROM pharmacy_prod.Customers WHERE Name = '{username}'";
+            _command!.CommandText = $"SELECT CustomerID FROM pharmacy_prod.Customers WHERE Name = '{username}'";
             var pwd = "0";
             _reader = _command.ExecuteReader();
             while (_reader.Read())
@@ -68,19 +68,19 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = $"SELECT * FROM pharmacy_prod.Products WHERE Price < {threshold} AND Name LIKE '{like}'";
+            _command!.CommandText = $"SELECT * FROM pharmacy_prod.Products WHERE Price < {threshold} AND Name LIKE '%{like}%'";
 
             _reader = _command.ExecuteReader();
-            Console.WriteLine("ProductID    Name            Manufacturer                      Price   Quantity Available");
+            Console.WriteLine("Name            Manufacturer                      Price   Quantity Available");
             while (_reader.Read())
             {
-                var pid = _reader[0].ToString()!.PadRight("ProductID    ".Length);
+                // var pid = _reader[0].ToString()!.PadRight("ProductID    ".Length);
                 var name = _reader[1].ToString()!.PadRight(16);
                 var manufacturer = _reader[2].ToString()!.PadRight("Schumm, Pfannerstill and Lueilwitz".Length);
                 var price = _reader[3].ToString()!.PadRight("Price   ".Length);
         
         
-                Console.WriteLine(pid + name + manufacturer + price + _reader[4]);
+                Console.WriteLine(name + manufacturer + price + _reader[4]);
             }
             _reader.Close();
         }
@@ -88,7 +88,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -112,6 +112,7 @@ internal static class Query
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
             throw;
+
         }
 
     }
@@ -120,9 +121,10 @@ internal static class Query
     {
         try
         {
+            var pid = GetProductId(name);
             Preprocessing();
             _command!.CommandText =
-                $"INSERT INTO pharmacy_prod.Cart (CustomerID, ProductID, Quantity) VALUES ({customerId}, {GetProductId(name)}, {quantity})";
+                $"INSERT INTO pharmacy_prod.Cart (CustomerID, ProductID, Quantity) VALUES ({customerId}, {pid}, {quantity})";
             _reader = _command.ExecuteReader();
             _reader.Close();
         }
@@ -130,7 +132,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -159,7 +161,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -185,6 +187,7 @@ internal static class Query
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
             throw;
+
         }
     }
 
@@ -211,7 +214,8 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            return false;
+
         }
 
     }
@@ -235,7 +239,8 @@ internal static class Query
             _reader.Close();
             for (var i = 0; i < data.Count/2; i++)
             {
-                AddToOrderedItems(GetNewOrderId(), data[0], data[1]);
+                AddToOrderedItems(GetNewOrderId(), data[(2 * i) + 1], data[2 * i]);
+                SubtractProductQty(data[2*i + 1], data[2*i]);
             }
             Preprocessing();
             ClearCartFromWarehouse(customerId);
@@ -249,7 +254,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -260,8 +265,14 @@ internal static class Query
         {
             Preprocessing();
             var newOrderId = GetNewOrderId() + 1;
+            Preprocessing();
+            var cartCost = CartCost(customerId);
+            Preprocessing();
+            var guy = AssignDelivery();
+            Preprocessing();
             _command!.CommandText =
-                $"INSERT INTO pharmacy_prod.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES ({newOrderId}, NOW(), 'Scheduled',{CartCost(customerId)}, {mode}, {AssignDelivery()}, {customerId}, )";
+                "INSERT INTO pharmacy_prod.Orders (OrderID, OrderDate, Status, Cost, PaymentType, CorrespondentID, CustomerID) VALUES" +
+                $" ({newOrderId}, NOW(), 'Scheduled',{cartCost}, '{mode}', {guy}, {customerId})";
             _reader = _command.ExecuteReader();
             _reader.Close();
         }
@@ -270,6 +281,7 @@ internal static class Query
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
             throw;
+
         }
     }
 
@@ -293,8 +305,7 @@ internal static class Query
             for (var i = 0; i < data.Count/2; i++)
             {
                 Preprocessing();
-                _command.CommandText = $"CALL pharmacy_prod.DeleteProducts({data[i + 1]}, {data[i]})";
-
+                _command.CommandText = $"CALL pharmacy_prod.DeleteProducts({data[2*i + 1]}, {data[2*i]})";
                 _reader = _command.ExecuteReader();
                 _reader.Close();
             }
@@ -303,7 +314,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -312,9 +323,10 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText =
-                $"INSERT INTO pharmacy_prod.OrderedItems (SELECT UnitID AS Unit_ID,{orderId} AS OrderId FROM pharmacy_prod.Warehouse WHERE ProductID = {productId} LIMIT {qty})";
+            
+            _command!.CommandText = $"CALL pharmacy_prod.AddToOrderedItems({qty}, {orderId}, {productId})";
 
+            Console.WriteLine(_command.CommandText);
             _reader = _command.ExecuteReader();
             _reader.Close();
         }
@@ -322,7 +334,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -353,7 +365,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -364,7 +376,8 @@ internal static class Query
         {
             Preprocessing();
             _command!.CommandText =
-                $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price FROM (SELECT COUNT(O.Unit_ID) AS quantity, ProductID FROM (pharmacy_prod.OrderedItems O JOIN pharmacy_prod.Warehouse W on O.Unit_ID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy_prod.Products p on TEMP.ProductID = p.ProductID";
+                $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price " +
+                $"FROM (SELECT COUNT(O.UnitID) AS quantity, ProductID FROM (pharmacy_prod.OrderedItems O JOIN pharmacy_prod.Warehouse W on O.UnitID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy_prod.Products p on TEMP.ProductID = p.ProductID";
         
             _reader = _command.ExecuteReader();
             Console.WriteLine("Name            Price            Quantity");
@@ -382,7 +395,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
     
@@ -408,8 +421,17 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
+
+    }
+
+    public static void SubtractProductQty(int prodId, int cut)
+    {
+        Preprocessing();
+        _command!.CommandText = $"UPDATE pharmacy_prod.Products SET Quantity = Quantity - {cut} WHERE ProductID = {prodId}";
+        _reader = _command.ExecuteReader();
+        _reader.Close();
 
     }
     
@@ -428,7 +450,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -449,7 +471,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
 
     }
@@ -469,7 +491,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -500,7 +522,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -519,7 +541,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
     }
 
@@ -538,7 +560,7 @@ internal static class Query
         {
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
-            throw;
+            
         }
 
     }
@@ -574,7 +596,7 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = "SELECT MAX(OrderID) FROM pharmacy_prod.Orders";
+            _command!.CommandText = "SELECT COUNT(OrderID) FROM pharmacy_prod.Orders";
             _reader = _command.ExecuteReader();
             var n = "0";
             while (_reader.Read())
@@ -589,6 +611,7 @@ internal static class Query
             Console.WriteLine(e);
             Console.WriteLine("Server error!");
             throw;
+
         }
 
     }
@@ -599,20 +622,16 @@ internal static class Query
         try
         {
             Preprocessing();
-            _command!.CommandText = "SELECT CorrespondentID FROM pharmacy_prod.Orders WHERE Status = 'Delivered'";
+            _command!.CommandText = "SELECT CorrespondentID FROM pharmacy_prod.Orders WHERE Status = '0' LIMIT 1";
 
             _reader = _command.ExecuteReader();
-            var ids = new List<int>();
+            int bruh;
             while (_reader.Read())
             {
-                ids.Add(int.Parse(_reader[0].ToString()!.Trim()));
+                bruh = int.Parse(_reader[0].ToString()!.Trim());
             }
             _reader.Close();
-
-            var rng = new Random();
-            var guy = rng.Next(ids.Count);  
-        
-            return guy;
+            return 3;
         }
         catch (MySqlException e)
         {

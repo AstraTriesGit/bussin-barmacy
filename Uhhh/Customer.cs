@@ -57,13 +57,13 @@ public class Customer
     private static void ViewProducts()
     {
         var run = true;
-        var threshold = 0;
+        var threshold = 200000;
         var like = "%";
         while (run)
         {
             Console.WriteLine("Filter by price/name, see all or exit? (price/name/all/exit)");
             var input = Console.ReadLine()!.Trim();
-
+            Console.WriteLine();
             switch (input)
             {
                 case "price":
@@ -77,7 +77,7 @@ public class Customer
                     Query.ViewProducts(threshold, like);
                     break;
                 case "all":
-                    Query.ViewProducts(0, "%");
+                    Query.ViewProducts(200000, "%");
                     break;
                 case "exit":
                     run = false;
@@ -103,9 +103,16 @@ public class Customer
 
     private void InspectCart()
     {
-        Console.WriteLine("Here are the items in your cart:");
-        Query.InspectCart(_customerId);
-        Console.WriteLine("The total cost of your cart is: " + Query.CartCost(_customerId));
+        try
+        {
+            Console.WriteLine("Here are the items in your cart:");
+            Query.InspectCart(_customerId);
+            Console.WriteLine("The total cost of your cart is: " + Query.CartCost(_customerId));
+        }
+        catch (Exception)
+        {
+            Console.WriteLine("There are no items in the cart!");
+        }
     }
 
     private void Checkout()
@@ -117,14 +124,14 @@ public class Customer
             switch (mode)
             {
                 case "COD":
-                    Console.WriteLine("Success! Your order will be delivered soon.");
                     Query.ClearCart(_customerId, mode);
+                    Console.WriteLine("Success! Your order will be delivered soon.");
                     break;
                 case "Online":
                     Console.WriteLine("Waiting for payment confirmation...");
                     Thread.Sleep(3000);
-                    Console.WriteLine("Success! Your order will be delivered soon.");
                     Query.ClearCart(_customerId, mode);
+                    Console.WriteLine("Success! Your order will be delivered soon.");
                     break;
                 default:
                     Console.WriteLine("Not a valid input!");

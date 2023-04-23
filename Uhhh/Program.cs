@@ -31,9 +31,9 @@ Enter the input:
 1) Login as customer.
 2) Login as administrator.
 3) Press 0 to exit the program.";
-        Console.WriteLine(welcome);
         while (true)
         {
+            Console.WriteLine(welcome);
 
             var input = int.Parse(Console.ReadLine() ?? string.Empty);
             switch (input)
