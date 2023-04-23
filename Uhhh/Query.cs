@@ -377,7 +377,10 @@ internal static class Query
             Preprocessing();
             _command!.CommandText =
                 $"SELECT TEMP.ProductID, TEMP.quantity, Name, Price " +
-                $"FROM (SELECT COUNT(O.UnitID) AS quantity, ProductID FROM (pharmacy_prod.OrderedItems O JOIN pharmacy_prod.Warehouse W on O.UnitID = W.UnitID) WHERE O.OrderID =  {orderId} GROUP BY ProductID) as TEMP JOIN pharmacy_prod.Products p on TEMP.ProductID = p.ProductID";
+                $"FROM (SELECT COUNT(O.UnitID) AS quantity, ProductID " +
+                $"FROM (pharmacy_prod.OrderedItems O JOIN pharmacy_prod.Warehouse W on O.UnitID = W.UnitID) " +
+                $"WHERE O.OrderID =  {orderId} " +
+                $"GROUP BY ProductID) as TEMP JOIN pharmacy_prod.Products p on TEMP.ProductID = p.ProductID";
         
             _reader = _command.ExecuteReader();
             Console.WriteLine("Name            Price            Quantity");
